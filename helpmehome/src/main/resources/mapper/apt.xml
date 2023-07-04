@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.home.model.mapper.AptMapper">
+
+	<select id="selectDongCode" resultType="dongCodeDto">
+		select dongCode, sidoName, gugunName, dongName
+		from dongcode
+	</select>
+	
+	<select id="getHomeList" parameterType="homeInfoDto" resultType="homeResultDto">
+	<!-- 
+		select hi.aptCode, hi.buildYear, hi.apartmentName, hd.floor, hd.area, hi.dongCode, dc.dongName, hd.dealamount, hi.lng, hi.lat
+		from dongcode dc
+		join houseinfo hi on dc.dongCode = hi.dongCode
+		join housedeal hd on hi.aptCode = hd.aptCode
+		where dc.sidoName = #{sidoName}
+		and dc.gugunName = #{gugunName}
+		and dc.dongName = #{dongName}
+		and hd.dealYear = #{year}
+		and hd.dealMonth = #{month} -->
+		<!-- 변경 : 시도, 구군, 동 이름만 검색하면, 해당 지역의 아파트 정보만 반환(매매정보 아님) : 층, 면적, 매매가 삭제됨 -->
+		select hi.aptCode, hi.buildYear, hi.apartmentName, hi.dongCode, dc.dongName, hi.lng, hi.lat
+		from dongcode dc
+		join houseinfo hi on dc.dongCode = hi.dongCode
+		where dc.sidoName = #{sidoName}
+		and dc.gugunName = #{gugunName}
+		and dc.dongName = #{dongName}
+	</select>
+	
+	<delete id="removeApt" parameterType="homeResultDto">
+		delete from housedeal hd
+		where hd.floor = #{floor}
+		and hd.area = #{area}
+		and hd.dealAmount = #{dealAmount}
+	</delete>
+	
+	<!-- 관심 지역 정보 -->
+	
+	<insert id="registInterest" parameterType="interestAreaDto">
+		INSERT INTO interestArea (userId, dongCode, area)
+		values (#{userId}, #{dongCode}, #{area})
+	</insert>
+	
+	<select id="getInterestList" parameterType="String" resultType="interestAreaDto">
+		SELECT idx, dongCode, area
+		FROM interestArea
+		WHERE userId = #{userId}
+	</select>
+	
+	<select id="getSidoDealInfo" resultType="sidoDealInfo">
+	<!-- 
+		select *
+		from sidoDealInfo
+		order by dealYear asc -->
+		
+		select dealYear, count(*) cnt
+		from housedeal
+		group by dealYear;
+	</select>
+	<select id="getKeywordHomeList" parameterType="String" resultType="homeResultDto">
+		select hi.aptCode, hi.buildYear, hi.apartmentName, hd.floor, hd.area, hi.dongCode, dc.dongName, hd.dealamount, hi.lng, hi.lat
+		from dongcode dc
+		join houseinfo hi on dc.dongCode = hi.dongCode
+		join housedeal hd on hi.aptCode = hd.aptCode
+		where hi.apartmentName like CONCAT("%", #{keyword}, "%");
+	</select>
+	<select id="getDealInfo" parameterType="String" resultType="dealInfoDto">
+		select dealYear, max(CAST(dealAmount AS double))*1000 maxAmount, min(CAST(dealAmount AS double))*1000 minAmount
+		from housedeal
+		where aptCode = #{aptCode}
+		group by dealYear
+		order by dealYear desc 
+		limit 3
+	</select>
+	
+	<insert id="insertBookmark" parameterType="bookMarkDto">
+		insert into bookmark (userId, aptCode)
+		values (#{userId}, #{aptCode})
+	</insert>
+	
+	<select id="getBookmarkApt" parameterType="String" resultType="homeResultDto">
+		select hi.aptCode, hi.buildYear, hi.apartmentName, hi.dongCode, hi.lng, hi.lat
+		from houseinfo hi
+		join bookmark bm on bm.aptCode = hi.aptCode
+		where bm.userId = #{userId}
+	</select>
+	
+	<delete id="deleteBookmark" parameterType="String">
+		delete from bookmark
+		where userId = #{userId} and aptCode = #{aptCode}
+	</delete>
+	
+	<delete id="deleteAllBookmark" parameterType="String">
+		delete from bookmark
+		where userId = #{userId}
+	</delete>
+</mapper>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+<mapper namespace="com.ssafy.home.model.mapper.BoardMapper">
+
+	<insert id="writeArticle" parameterType="boardDto">
+		insert into board (userid, subject, content, hit, regtime)
+		values (#{userid}, #{subject}, #{content}, 0, now())
+	</insert>
+	
+	<select id="listArticle" parameterType="map" resultType="boardDto">
+		select articleno, userid, subject, content, hit,
+				case when date_format(regtime, '%Y%m%d') = date_format(now(), '%Y%m%d')
+				then date_format(regtime, '%H:%i:%s')
+				else date_format(regtime, '%y.%m.%d')
+				end regtime
+		from board
+		<if test="word != null and word != ''">
+			<if test="key == 'subject'">
+				where subject like concat('%', #{word}, '%')
+			</if>
+			<if test="key != 'subject'">
+				where ${key} = #{word}
+			</if>
+		</if>
+		order by articleno desc
+		limit #{start}, #{spp}
+	</select>
+	
+	<select id="getTotalCount" parameterType="map" resultType="int">
+		select count(articleno)
+		from board
+		<if test="word != null and word != ''">
+			<if test="key == 'subject'">
+				where subject like concat('%', #{word}, '%')
+			</if>
+			<if test="key != 'subject'">
+				where ${key} = #{word}
+			</if>
+		</if>
+	</select>
+	
+	<select id="getArticle" parameterType="int" resultType="boardDto">
+		select articleno, userid, subject, content, hit, regtime
+		from board
+		where articleno = #{articleno}
+	</select>
+	
+	<update id="updateHit" parameterType="int">
+		update board
+		set hit = hit + 1
+		where articleno = #{articleno}
+	</update>
+	
+	<update id="modifyArticle" parameterType="boardDto">
+		update board
+		set subject = #{subject}, content = #{content}
+		where articleno = #{articleno}
+	</update>
+	
+	<delete id="deleteMemo" parameterType="int">
+		delete from comments
+		where articleno = #{articleno}
+	</delete>
+	
+	<delete id="deleteArticle" parameterType="int">
+		delete from board
+		where articleno = #{articleno}
+	</delete>
+	
+	<!-- 도서 전체 조회 -->
+	<select id="search" parameterType="searchCondition" resultType="boardDto">
+		SELECT articleno, userid, subject, content, hit, regtime
+		FROM board
+		<if test="key != 'none'">
+			WHERE ${key} like concat('%', #{word}, '%')
+		</if>
+		<if test="orderBy != 'none'">
+			ORDER BY ${orderBy} ${orderByDir}
+		</if>
+		<if test="limit">
+			LIMIT #{offset}, #{countPerPage}
+		</if>
+	</select>
+	
+	<delete id="deleteAllArticle" parameterType="String">
+		delete from board
+		where userid = #{userId}
+	</delete>
+	
+	<delete id="deleteAllArticleMemo" parameterType="String">
+		delete from comments
+		where articleno in (
+			select articleno
+			from board
+			where userid = #{userId}
+		)
+	</delete>
+
+</mapper>
+

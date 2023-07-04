@@ -1,0 +1,810 @@
+<!-- //시도 이름이 로드되지 않은 상태일 때만 로드 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<style>
+		#map {
+			width: 100%;
+			height: 400px;
+		}
+		
+		.info-window {
+			width: 150px;
+			text-align: center;
+			padding: 6px 0;
+			background-color: pink;
+			border-radius: 5px;
+		}
+	</style>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+	<meta name="description" content="" />
+	<meta name="author" content="" />
+	
+	<title>My Home</title>
+
+	<!-- Favicon-->
+	<link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+	<!-- Font Awesome icons (free version)-->
+	<script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js"
+		crossorigin="anonymous"></script>
+	<!-- Google fonts-->
+	<link href="https://fonts.googleapis.com/css?family=Montserrat:400,700"
+		rel="stylesheet" type="text/css" />
+	<link
+		href="https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700"
+		rel="stylesheet" type="text/css" />
+	<!-- Core theme CSS (includes Bootstrap)-->
+	<link href="css/styles.css" rel="stylesheet" />
+	<link rel="shortcut icon" href="./assets/img/favicon.ico" />
+	<link
+	    href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
+	    rel="stylesheet"
+	    integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
+	    crossorigin="anonymous" />
+	<link rel="stylesheet"
+	    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css" />
+
+</head>
+<body id="page-top">
+
+	<!-- Navigation-->
+	<nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNav">
+		<div class="container">
+			<a class="navbar-brand" href="#page-top">구해줘 Home!!!</a>
+			<button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+				data-bs-target="#navbarResponsive" aria-controls="navbarResponsive"
+				aria-expanded="false" aria-label="Toggle navigation">
+				Menu <i class="fas fa-bars ms-1"></i>
+			</button>
+	
+			<c:choose>
+				<c:when test="${empty userInfo}">
+					<div class="collapse navbar-collapse" id="navbarResponsive">
+						<ul id="state_logout"
+							class="navbar-nav text-uppercase ms-auto py-4 py-lg-0">
+							<li class="nav-item"><a class="nav-link" href="#"
+								data-bs-toggle="modal" data-bs-target="#pollModal">회원가입</a></li>
+							<li class="nav-item"><a class="nav-link" href="#"
+								data-bs-toggle="modal" data-bs-target="#login">로그인</a></li>
+							<li class="nav-item"><a class="nav-link" href="#"
+								data-bs-toggle="modal" data-bs-target="#findPw">비밀번호찾기</a></li>
+	
+						</ul>
+					</div>
+				</c:when>
+				<c:otherwise>
+					<div class="collapse navbar-collapse" id="navbarResponsive">
+						<ul id="state_login"
+							class="navbar-nav text-uppercase ms-auto py-4 py-lg-0">
+							<li class="nav-item"><a class="nav-link" href="#"
+								data-bs-toggle="modal" data-bs-target="#info">회원정보</a></li>
+							<li class="nav-item"><a class="nav-link"
+								href="${root}/user?cmd=logout">로그아웃</a></li>
+							<c:choose>
+								<c:when test="${userInfo.id == 'admin'}">
+									<li class="nav-item"><a class="nav-link"
+										href="${root}/user?cmd=goAdminPage">회원정보관리</a></li>
+									<li class="nav-item"><a class="nav-link"
+										href="${root}/home?cmd=goAdminPage">부동산정보관리</a></li>
+								</c:when>
+							</c:choose>
+						</ul>
+					</div>
+				</c:otherwise>
+	
+			</c:choose>
+		</div>
+	</nav>
+	<!-- Masthead-->
+	<header class="masthead">
+		<div class="container">
+			<div class="masthead-subheading">구해줘 Home</div>
+			<div class="masthead-heading text-uppercase">우리를 위한 집</div>
+			<a class="btn btn-primary btn-xl text-uppercase" href="#services">SERVICE </a>
+	
+		</div>
+	</header>
+
+	<!-- Services-->
+
+	<section class="page-section" id="services">
+		<div class="container">
+			<div class="text-center">
+				<h2 class="section-heading text-uppercase">집 찾기</h2>
+			</div>
+			<div class="row text-center">
+				<div id="map"></div>
+				<form method="post" action="${root }/home">
+					<input type="hidden" name="cmd" value="search">
+					 
+					<!-- 시도 선택 -->
+					<select id="sido" onchange="changeSido(this)" name="sido">
+						<c:if test="${empty curSidoName }">
+							<option value="0" selected>시도선택</option>
+						</c:if>
+						<option value="0">시도선택</option>
+						<c:forEach items="${sidoLs}" var="sido">
+							<c:if test="${sido == curSidoName}">
+								<option value="${sido}" selected>${sido}</option>
+							</c:if>
+
+							<c:if test="${sido != curSidoName && !empty sido}">
+								<option value="${sido}">${sido}</option>
+							</c:if>
+						</c:forEach>
+					</select> 
+					
+					<!-- 구군 선택 -->
+					<select id="gugun" onchange="changeGugun(this)" name="gugun">
+						<option value="0" selected>구군선택</option>
+					</select> 
+					
+					<!-- 동 선택 -->
+					<select id="dong" name="dong">
+						<option value="0" selected>동선택</option>
+					</select> 
+					
+					<!-- 매매날짜 선택 -->
+					<select id="year" onchange="changeYear(this)" name="year">
+						<option value="0" selected>매매년도선택</option>
+					</select> <select id="month" name="month">
+						<option value="0" selected>매매월선택</option>
+					</select>
+					<button type="submit" id="btn-search" >검색</button>
+					
+                </form>
+                
+				<!-- 관심지역 추가 -->
+                <form method="post" action="${root }/home">
+					<input type="hidden" name="cmd" value="add">
+                	<button type="submit" id="btn-add">관심지역 추가</button>
+                </form>
+				<form method="post" action="${root }/home">
+					<input type="hidden" name="cmd" value="selectInterest"> <select
+						name="selectedDongCode">
+						<option value="0">관심지역 목록</option>
+						<option value="1">관심지역</option>
+						<c:forEach items="${interestLs }" var="interDto">
+							<option value="${interDto.dongCode }">${interDto.area }</option>
+						</c:forEach>
+					</select> <select id="year2" onchange="changeYear2(this)" name="year2">
+						<option value="0" selected>매매년도선택</option>
+					</select> <select id="month2" name="month2">
+						<option value="0" selected>매매월선택</option>
+					</select>
+					<button type="submit" id="btn-search">관심지역 검색</button>
+				</form>
+				<div>
+					<input type="text" id="searchName">
+					<button type="button" onclick="searchName()">아파트 이름 검색</button>
+				</div>
+				<button onclick="draw()">그리기</button>
+
+				<!-- 실행 결과 표로 출력 -->
+				<div>
+					<table width="100%">
+						<thead>
+							<tr>
+								<th>아파트이름</th>
+								<th>층</th>
+								<th>면적</th>
+								<th>법정동</th>
+								<th>거래금액</th>
+							</tr>
+						</thead>
+						<tbody id="apt-list">
+							<c:forEach items="${result }" var="apt">
+								<tr onclick="drawOne(this)">
+									<td name="aptName">${apt.apartmentName }</td>
+									<td>${apt.floor }</td>
+									<td>${apt.area }</td>
+									<td>${apt.dongName }</td>
+									<td>${apt.dealAmount }</td>
+									<td>${apt.roadName }</td>
+								</tr>
+							</c:forEach>
+						</tbody>
+					</table>
+				</div>
+
+
+				<script type="text/javascript"
+					src="//dapi.kakao.com/v2/maps/sdk.js?appkey=74f1e792cc4d7d72169a67ae909e2b50&libraries=services,clusterer,drawing"></script>
+				<script>
+					// 카카오 지도
+					let mapContainer = document.getElementById("map");
+					let mapOption = {
+						center : new kakao.maps.LatLng(37.500613, 127.036431),
+						level : 3,
+					};
+
+					// 맵을 표시할 엘리먼트와 맵에 대한 옵션 값을 넘겨주면
+					// 맵을 해당 엘리먼트에 그려준다.
+					let map = new kakao.maps.Map(mapContainer, mapOption);
+
+					let marker, infoWindow;
+					const drawPicker1 = function(aptName, address) {
+						map.setLevel(3);
+						if (marker != null && infoWindow != null) {
+							marker.setMap(null); // 지도에 있는 마커 모두 제거
+							infoWindow.close(); // 정보 창 모두 닫기
+						}
+
+						// 주소-좌표 변환 객체 생성 Geocoder
+						let geocoder = new kakao.maps.services.Geocoder();
+
+						// 주소로 위도, 경도 값을 얻어온다.
+						geocoder
+								.addressSearch(
+										address,
+										function(result, status) {
+											// 정상적으로 검색이 완료 됐으면
+											if (status === kakao.maps.services.Status.OK) {
+												let coords = new kakao.maps.LatLng(
+														result[0].y,
+														result[0].x);
+
+												// 결과 값으로 받은 위치를 마커로 표시합니다.
+												marker = new kakao.maps.Marker(
+														{
+															map : map,
+															position : coords,
+														});
+
+												// InfoWindow로 장소에 대한 설명 표시
+												infoWindow = new kakao.maps.InfoWindow(
+														{
+															content : `<div class="info-window">`+aptName+`</div>`,
+														});
+												console.log(aptName);
+												infoWindow.open(map, marker);
+
+												// 지도의 중심을 결과 값으로 받은 위치로 이동
+												//map.setCenter(coords);
+												map.panTo(coords);
+											} else {
+												window.alert("못찾음");
+											}
+										});
+					};
+					const drawPicker2 = function(aptName, address) {
+						map.setLevel(7);
+						// 주소-좌표 변환 객체 생성 Geocoder
+						let geocoder = new kakao.maps.services.Geocoder();
+
+						// 주소로 위도, 경도 값을 얻어온다.
+						geocoder
+								.addressSearch(
+										address,
+										function(result, status) {
+											// 정상적으로 검색이 완료 됐으면
+											if (status === kakao.maps.services.Status.OK) {
+												let coords = new kakao.maps.LatLng(
+														result[0].y,
+														result[0].x);
+
+												// 결과 값으로 받은 위치를 마커로 표시합니다.
+												marker = new kakao.maps.Marker(
+														{
+															map : map,
+															position : coords,
+														});
+
+												map.panTo(coords);
+											}
+										});
+					};
+					</script>
+					<script>
+					window.onload = function() {
+						//연도 출력하기
+						let options = `<option value="0" selected>매매년도선택</option>`;
+						let year = new Date().getFullYear();
+						for (let i = year; i > year - 20; i--) {
+							options += "<option value='"+i+"'>" + i
+									+ "년</option>";
+						}
+						const select = document.querySelector("#year");
+						const select2 = document.querySelector("#year2");
+						select.innerHTML = options;
+						select2.innerHTML = options;
+						
+						<c:if test="${empty sidoLs }">
+							//시도 정보가 세션에 없으면 다시 받아옴
+							location.href = "${root}/home?cmd=selectAll";
+						</c:if>
+						
+						//옵션의 가본값 설정
+						if ("${curSidoName}" != null) changeSido();
+						if ("${curGugunName}" != null) changeGugun();
+						
+					}
+					function changeYear(e) {
+						console.log("changeYear");
+						let options = `<option value="0" selected>매매월선택</option>`;
+						const date = new Date();
+						const month = date.getMonth() + 1;
+
+						const position = e.selectedIndex;
+						const maxMonth = e[position].value == date
+								.getFullYear() ? month : 12;
+
+						for (let i = 1; i <= maxMonth; i++) {
+							options += ("<option value=\""+ i +"\">" + i + "월</option>");
+						}
+
+						const select = document.querySelector("#month");
+						select.innerHTML = options;
+					};
+					function changeYear2(e) {
+						console.log("changeYear2");
+						let options = `<option value="0" selected>매매월선택</option>`;
+						const date = new Date();
+						const month = date.getMonth() + 1;
+
+						const position = e.selectedIndex;
+						const maxMonth = e[position].value == date
+								.getFullYear() ? month : 12;
+
+						for (let i = 1; i <= maxMonth; i++) {
+							options += ("<option value=\""+ i +"\">" + i + "월</option>");
+						}
+
+						const select = document.querySelector("#month2");
+						select.innerHTML = options;
+					};
+					//바뀌면 그거에 따라 바뀌는 코드
+					function changeSido(e) {
+
+						var curSido = document.getElementById("sido");
+						console.log(curSido.value);
+						var curSidoName = curSido.value;
+						
+						//사용자가 선택한 sido에 있는 구군 이름 다 고름
+						var gugun = new Set();
+						
+						<c:forEach items="${dongCodeLs }" var="dongCode">
+							if ("${not empty dongCode}" && ("${dongCode.sidoName}" == curSidoName) && "${dongCode.gugunName}" != "") {
+								gugun.add("${dongCode.gugunName}");
+							}
+						</c:forEach>
+					    console.log(gugun);
+						//구군을 출력
+						let options = `<option value="0" selected>구군선택</option>`;
+						
+						gugun.forEach((gu) =>{
+							console.log(gu);
+							if (gu.trim() != null) {
+								if (gu == "${curGugunName}") options += ('<option value="'+gu+'" selected >'+gu+'</option>');
+								else options += ('<option value="'+gu+'">'+gu+'</option>');
+							}}
+						);
+						
+						const gugunSelect = document.querySelector("#gugun");
+						gugunSelect.innerHTML = options;
+						
+					}
+					function searchName(){
+						var name = document.getElementById("searchName");
+						location.href = "${root}/home?cmd=searchName&name=" + name.value; //get으로 넘김
+					}
+					
+					function changeGugun(e) {
+						var curGugun = document.getElementById("gugun");
+						var curGugunName = curGugun.value;
+						
+						//사용자가 선택한 gugun에 있는 dong 이름 다 고름
+						var dong = new Set();
+
+						<c:forEach items="${dongCodeLs }" var="dongCode">
+							if ("${not empty dongCode}" && ("${dongCode.gugunName}" == curGugunName && "${dongCode.dongName}" != "")) {
+								dong.add("${dongCode.dongName}");
+							}
+						</c:forEach>
+					    console.log(dong);
+						
+					    //동을 출력
+						let options = `<option value="0" selected>동선택</option>`;
+						
+						dong.forEach((d) => {
+							console.log(d);
+							if (d.trim() != null) {
+								if (d == "${curDongName}") options += ('<option value="'+d+'" selected>'+d+'</option>');
+								else options += ('<option value="'+d+'">'+d+'</option>');
+								}
+							}
+						);
+						
+						const dongSelect = document.querySelector("#dong");
+						dongSelect.innerHTML = options;
+					}
+					
+					function draw(){
+						if (marker != null && infoWindow != null) {
+							marker.setMap(null); // 지도에 있는 마커 모두 제거
+							infoWindow.close(); // 정보 창 모두 닫기
+						}
+						<c:forEach var="home" items="${result}">
+							var addr = "${curSidoName} ${curGugunName} ${curDongName} ${home.roadName}";
+							drawPicker2("${home.apartmentName}", addr);
+						</c:forEach>
+					}
+					
+					function drawOne(e){
+						if (marker != null && infoWindow != null) {
+							marker.setMap(null); // 지도에 있는 마커 모두 제거
+							infoWindow.close(); // 정보 창 모두 닫기
+						}
+						var addr = "${curSidoName} ${curGugunName} ${curDongName} " + e.cells[5].innerHTML;
+						console.log(addr);
+						console.log(e.cells[0].innerHTML); //!!!아파트 이름 가져오기
+						
+						drawPicker1(e.cells[0].innerHTML, addr);
+					}
+					
+					<c:if test="${!empty msg}">
+						alert("${msg}");
+					</c:if>
+				</script>
+			</div>
+		</div>
+	</section>
+
+	<!-- Footer-->
+	<footer class="footer py-4">
+		<div class="container">
+			<div class="row align-items-center">
+				<div class="col-lg-4 text-lg-start">Copyright &copy; Your
+					Website 2022</div>
+				<div class="col-lg-4 my-3 my-lg-0">
+					<a class="btn btn-dark btn-social mx-2" href="#!"
+						aria-label="Twitter"><i class="fab fa-twitter"></i></a> <a
+						class="btn btn-dark btn-social mx-2" href="#!"
+						aria-label="Facebook"><i class="fab fa-facebook-f"></i></a> <a
+						class="btn btn-dark btn-social mx-2" href="#!"
+						aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+				</div>
+				<div class="col-lg-4 text-lg-end">
+					<a class="link-dark text-decoration-none me-3" href="#!">Privacy
+						Policy</a> <a class="link-dark text-decoration-none" href="#!">Terms
+						of Use</a>
+				</div>
+			</div>
+		</div>
+	</footer>
+	
+	
+	<!-- Portfolio Modals-->
+
+	<!-- Bootstrap core JS-->
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+	<!-- Core theme JS-->
+	<script src="js/scripts.js"></script>
+	<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
+	<!-- * *                               SB Forms JS                               * *-->
+	<!-- * * Activate your form at https://startbootstrap.com/solution/contact-forms * *-->
+	<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
+	<script src="https://cdn.startbootstrap.com/sb-forms-latest.js"></script>
+
+	<!-- 회원가입 modal start -->
+	<div class="modal fade" id="pollModal" data-bs-backdrop="static"
+		data-bs-keyboard="false" tabindex="-1"
+		aria-labelledby="staticBackdropLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<!-- Modal Header -->
+				<div class="modal-header">
+					<h4 class="modal-title">
+						<i class="bi bi-chat-left-dots-fill text-info"> 회원가입</i>
+					</h4>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+
+				<!-- Modal body -->
+				<div class="modal-body">
+					<form action="${root }/user" method="post">
+						<input type="hidden" name="cmd" value="signIn">
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">아이디 * :</label> <input
+								type="text" class="form-control" id="signId" name="signId" />
+						</div>
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">비밀번호 * :</label> <input
+								type="password" class="form-control" id="signPw"
+								placeholder="영문, 숫자 포함 6자리 이상" name="signPw" />
+						</div>
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">이름 * :</label> <input
+								type="text" class="form-control" id="signName"
+								placeholder="User name" name="signName" />
+						</div>
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">주소 * :</label> <input
+								type="text" class="form-control" id="signAddr"
+								placeholder="Address" name="signAddr" />
+						</div>
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">전화번호 * :</label> <input
+								type="text" class="form-control" id="signPhone"
+								placeholder="010-xxxx-xxxx" name="signPhone" />
+						</div>
+
+						<div class="modal-footer">
+							<button type="submit" id="btn-info-create"
+								class="btn btn-primary btn-sm">등록</button>
+						</div>
+					</form>
+				</div>
+				<!-- Modal footer -->
+
+			</div>
+		</div>
+	</div>
+	<!-- 회원가입 modal end -->
+
+	<!-- 로그인 modal start -->
+	<div class="modal fade" id="login" data-bs-backdrop="static"
+		data-bs-keyboard="false" tabindex="-1"
+		aria-labelledby="staticBackdropLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<!-- Modal Header -->
+				<div class="modal-header">
+					<h4 class="modal-title">
+						<i class="bi bi-chat-left-dots-fill text-info"> 로그인</i>
+					</h4>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+
+				<!-- Modal body -->
+				<div class="modal-body">
+					<form action="${root }/user" method="post">
+						<input type="hidden" name="cmd" value="login">
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">아이디 * :</label> <input
+								type="text" class="form-control" id="id" name="id" />
+						</div>
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">비밀번호 * :</label> <input
+								type="password" class="form-control" id="password"
+								placeholder="영문, 숫자 포함 6자리 이상" name="pw" />
+						</div>
+						<!-- Modal footer -->
+						<div class="modal-footer">
+							<button type="submit" id="btn-login"
+								class="btn btn-primary btn-sm">로그인</button>
+						</div>
+					</form>
+				</div>
+
+
+			</div>
+		</div>
+	</div>
+	<!-- 로그인 modal end -->
+
+	<!-- 회원정보 modal start -->
+    <div
+      class="modal fade"
+      id="info"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+      tabindex="-1"
+      aria-labelledby="staticBackdropLabel"
+      aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h4 class="modal-title">
+              <i class="bi bi-chat-left-dots-fill text-info"> 회원정보</i>
+            </h4>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"></button>
+          </div>
+
+          <!-- Modal body -->
+          <div class="modal-body">
+            <form action="">
+              <div class="mb-3">
+                <i
+                  class="bi bi-patch-question"
+                  style="color: rgb(121, 2, 119)"></i>
+                <label for="question" class="form-label"
+                  >아이디 * : ${userInfo.id }</label
+                >
+              </div>
+              <div class="mb-3">
+                <i
+                  class="bi bi-patch-question"
+                  style="color: rgb(121, 2, 119)"></i>
+                <label for="question" class="form-label"
+                  >비밀번호 * : ${userInfo.pw }</label
+                >
+              </div>
+              <div class="mb-3">
+                <i
+                  class="bi bi-patch-question"
+                  style="color: rgb(121, 2, 119)"></i>
+                <label for="question" class="form-label">이름 * : ${userInfo.name }</label>
+              </div>
+              <div class="mb-3">
+                <i
+                  class="bi bi-patch-question"
+                  style="color: rgb(121, 2, 119)"></i>
+                <label for="question" class="form-label"
+                  >주소 * : ${userInfo.addr }</label
+                >
+              </div>
+              <div class="mb-3">
+                <i
+                  class="bi bi-patch-question"
+                  style="color: rgb(121, 2, 119)"></i>
+                <label for="question" class="form-label"
+                  >전화번호 * : ${userInfo.phone }</label
+                >
+              </div>
+            </form>
+          </div>
+
+          <!-- Modal footer -->
+          <div class="modal-footer">
+            <button
+              type="button"
+              id="btn-done"
+              class="btn btn-primary btn-sm"
+              onclick="done()">
+              확인
+            </button>
+              <a
+              class="btn btn-primary btn-sm"
+                href="#"
+                data-bs-toggle="modal"
+                data-bs-target="#updateInfo"
+                >수정</a
+              >
+            
+            <button
+              type="button"
+              id="btn-done"
+              class="btn btn-primary btn-sm"
+              onclick="remove()">
+              탈퇴
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 회원정보 update start -->
+	<div class="modal fade" id="updateInfo" data-bs-backdrop="static"
+		data-bs-keyboard="false" tabindex="-1"
+		aria-labelledby="staticBackdropLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<!-- Modal Header -->
+				<div class="modal-header">
+					<h4 class="modal-title">
+						<i class="bi bi-chat-left-dots-fill text-info"> 회원가입</i>
+					</h4>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+
+				<!-- Modal body -->
+				<div class="modal-body">
+					<form action="${root }/user" method="post">
+						<input type="hidden" name="cmd" value="updateInfo">
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">아이디 * :</label> <input
+								type="text" class="form-control" id="signId" name="signId" value="${userInfo.id }" />
+						</div>
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">비밀번호 * :</label> <input
+								type="password" class="form-control" id="signPw"
+								placeholder="영문, 숫자 포함 6자리 이상" name="signPw" value="${userInfo.pw }" />
+						</div>
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">이름 * :</label> <input
+								type="text" class="form-control" id="signName"
+								placeholder="User name" name="signName" value="${userInfo.name }"/>
+						</div>
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">주소 * :</label> <input
+								type="text" class="form-control" id="signAddr"
+								placeholder="Address" name="signAddr" value="${userInfo.addr }"/>
+						</div>
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">전화번호 * :</label> <input
+								type="text" class="form-control" id="signPhone"
+								placeholder="010-xxxx-xxxx" name="signPhone" value="${userInfo.phone }"/>
+						</div>
+
+						<div class="modal-footer">
+							<button type="submit" id="btn-info-create"
+								class="btn btn-primary btn-sm">수정</button>
+						</div>
+					</form>
+				</div>
+				<!-- Modal footer -->
+
+			</div>
+		</div>
+	</div>
+	<!-- 회원가입 update end -->
+    <!-- 회원정보 modal end -->
+    <script>
+    	function done(){
+    		location.reload();
+    	}
+    	function remove(){
+    		location.reload();
+    		location.href = "${root}/user?cmd=delete&id=${userInfo.id}";
+    	}
+    </script>
+
+	<!-- 회원가입 modal start -->
+	<div class="modal fade" id="findPw" data-bs-backdrop="static"
+		data-bs-keyboard="false" tabindex="-1"
+		aria-labelledby="staticBackdropLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<!-- Modal Header -->
+				<div class="modal-header">
+					<h4 class="modal-title">
+						<i class="bi bi-chat-left-dots-fill text-info"> 비밀번호찾기</i>
+					</h4>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+
+				<!-- Modal body -->
+				<div class="modal-body">
+					<form action="${root }/user" method="post">
+						<input type="hidden" name="cmd" value="findPw">
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">아이디 * :</label> <input
+								type="text" class="form-control" id="signId" name="signId" />
+						</div>
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">이름 * :</label> <input
+								type="text" class="form-control" id="signName"
+								placeholder="User name" name="signName" />
+						</div>
+						<div class="mb-3">
+							<i class="bi bi-patch-question" style="color: rgb(121, 2, 119)"></i>
+							<label for="question" class="form-label">전화번호 * :</label> <input
+								type="text" class="form-control" id="signPhone"
+								placeholder="010-xxxx-xxxx" name="signPhone" />
+						</div>
+
+						<div class="modal-footer">
+							<button type="submit" id="btn-info-create"
+								class="btn btn-primary btn-sm">찾기</button>
+						</div>
+					</form>
+				</div>
+				<!-- Modal footer -->
+
+			</div>
+		</div>
+	</div>
+	<!-- 회원가입 modal end -->
+</body>
+</html>
